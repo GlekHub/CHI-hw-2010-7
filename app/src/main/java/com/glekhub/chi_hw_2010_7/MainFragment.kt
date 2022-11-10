@@ -15,10 +15,13 @@ import com.glekhub.chi_hw_2010_7.databinding.RecyclerAnimalBinding
 import com.glekhub.chi_hw_2010_7.net.AnimalAPI
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+
+private const val TAG = "TAG"
 
 class MainFragment : Fragment() {
 
@@ -33,8 +36,6 @@ class MainFragment : Fragment() {
     ): View {
         _binding = RecyclerAnimalBinding.inflate(inflater, container, false)
 
-        binding.list.layoutManager = LinearLayoutManager(context)
-        binding.list.adapter = AnimalAdapter(listOf())
 
         return binding.root
     }
@@ -42,21 +43,10 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        Thread {
-            try {
-                loadWithOkHttp()
-                loadWithRetrofit("3")
-                Log.d("FRAG", "$animals")
-
-                activity?.runOnUiThread {
-                    update(animals)
-                }
-            } catch (e: Exception) {
-                Log.d("FRAG", "Failure: ${e.message}")
-            }
-
-        }.start()
-
+        //task1()
+        //task2()
+        //task3Supervisor()
+        task3()
     }
 
     private fun loadWithOkHttp() {
@@ -87,8 +77,80 @@ class MainFragment : Fragment() {
     }
 
     private fun update(animals: MutableList<Animal>) {
+
         Handler(Looper.getMainLooper()).post {
             binding.list.adapter = AnimalAdapter(animals)
+            Log.d(TAG, "In main thread: ${Thread.currentThread()}")
+        }
+    }
+
+    private fun load() {
+        //try {
+            loadWithOkHttp()
+            loadWithRetrofit("3")
+            Log.d(TAG, "In coroutine: ${Thread.currentThread()}")
+
+//        } catch (e: Exception) {
+//            Log.d(TAG, "Failure: ${e.message}")
+//        }
+    }
+
+    private fun task1() {
+        CoroutineScope(Dispatchers.IO).launch {
+            load()
+            Log.d(TAG, "TASK1: loaded")
+            update(animals)
+        }
+    }
+
+    private fun task2() = runBlocking {
+        val job: Job = launch(Dispatchers.IO) {
+            repeat(3) {
+                load()
+                Log.d(TAG, "TASK2: start loading in ${it + 1}st time")
+                delay(500L)
+                Log.d(TAG, "TASK2: launch delay end in ${it + 1}st time")
+            }
+        }
+        delay(900L)
+        Log.d(TAG, "TASK2: delay end")
+        job.cancel()
+        job.join()
+        Log.d(TAG, "TASK2: job join")
+        update(animals)
+    }
+
+    private val superJob = SupervisorJob()
+    private val superScope = CoroutineScope(Dispatchers.Default + superJob)
+
+    private fun task3Supervisor() = superScope.launch {
+        try {
+            coroutineScope {
+                async {
+                    load()
+                    update(animals)
+                }
+            }.await()
+            delay(1000L)
+        } catch (e: Exception) {
+            Log.d(TAG, "TASK3: Failure $e")
+        }
+    }
+
+    private val job = Job()
+    private val scope = CoroutineScope(Dispatchers.Default + job)
+
+    private fun task3() = scope.launch {
+        try {
+            coroutineScope {
+                async {
+                    load()
+                    update(animals)
+                }
+            }.await()
+            delay(1000L)
+        } catch (e: Exception) {
+            Log.d(TAG, "TASK3: Failure $e")
         }
     }
 
