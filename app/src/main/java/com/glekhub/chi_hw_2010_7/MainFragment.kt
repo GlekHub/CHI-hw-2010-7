@@ -3,11 +3,13 @@ package com.glekhub.chi_hw_2010_7
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.SyncStateContract.Helpers.update
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.glekhub.chi_hw_2010_7.adapter.AnimalAdapter
 import com.glekhub.chi_hw_2010_7.data.Animal
@@ -45,8 +47,8 @@ class MainFragment : Fragment() {
 
         //task1()
         //task2()
-        //task3Supervisor()
-        task3()
+        task3Supervisor()
+        //task3Job()
     }
 
     private fun loadWithOkHttp() {
@@ -121,7 +123,7 @@ class MainFragment : Fragment() {
     }
 
     private val superJob = SupervisorJob()
-    private val superScope = CoroutineScope(Dispatchers.Default + superJob)
+    private val superScope = CoroutineScope(Dispatchers.IO + superJob)
 
     private fun task3Supervisor() = superScope.launch {
         try {
@@ -129,18 +131,23 @@ class MainFragment : Fragment() {
                 async {
                     load()
                     update(animals)
+                    delay(1000L)
+                    throw RuntimeException("Request Failed")
                 }
             }.await()
-            delay(1000L)
+
         } catch (e: Exception) {
+            MainScope().launch {
+                Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
+            }
             Log.d(TAG, "TASK3: Failure $e")
         }
     }
 
     private val job = Job()
-    private val scope = CoroutineScope(Dispatchers.Default + job)
+    private val scope = CoroutineScope(Dispatchers.IO + job)
 
-    private fun task3() = scope.launch {
+    private fun task3Job() = scope.launch {
         try {
             coroutineScope {
                 async {
