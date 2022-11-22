@@ -48,6 +48,10 @@ class MainFragment : Fragment() {
         return dbManager?.fetchAnimals()
     }
 
+    private fun deleteAnimals() {
+        dbManager?.deleteAnimals()
+    }
+
 
     private fun loadWithRetrofit(count: String) {
         val retrofit: Retrofit =
@@ -70,7 +74,7 @@ class MainFragment : Fragment() {
 
     private fun coroutineTask() {
         CoroutineScope(Dispatchers.IO).launch {
-            context?.deleteDatabase("Retro.db")
+            deleteAnimals()
             loadWithRetrofit("3")
             update()
         }
