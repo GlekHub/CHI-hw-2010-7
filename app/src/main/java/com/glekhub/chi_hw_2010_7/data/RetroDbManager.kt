@@ -63,11 +63,4 @@ class RetroDbManager(context: Context) {
         db.close()
         return emptyList()
     }
-
-    fun deleteAnimals() {
-        val db = dbHelper.writableDatabase
-        db.delete(Animal.TABLE, "", null)
-        //db.execSQL("DELETE FROM ${Animal.TABLE}") //also working
-        db.close()
-    }
 }
