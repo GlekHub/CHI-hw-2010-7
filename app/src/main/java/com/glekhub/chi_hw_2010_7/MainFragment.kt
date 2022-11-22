@@ -48,11 +48,6 @@ class MainFragment : Fragment() {
         return dbManager?.fetchAnimals()
     }
 
-    private fun deleteAnimals() {
-        dbManager?.deleteAnimals()
-    }
-
-
     private fun loadWithRetrofit(count: String) {
         val retrofit: Retrofit =
             Retrofit.Builder().baseUrl("https://zoo-animal-api.herokuapp.com/animals/rand/")
@@ -74,7 +69,6 @@ class MainFragment : Fragment() {
 
     private fun coroutineTask() {
         CoroutineScope(Dispatchers.IO).launch {
-            deleteAnimals()
             loadWithRetrofit("3")
             update()
         }
